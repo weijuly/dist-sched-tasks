@@ -10,5 +10,5 @@ def main(config):
     logger = logging.getLogger(APP_NAME)
     logger.info('Cooking pasta')
     time.sleep(2)
-    raise RetryError('Gas temporarily not available')
+    #raise RetryError('Gas temporarily not available')
     return {'message': 'cooking complete'}
