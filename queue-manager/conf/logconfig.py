@@ -5,7 +5,7 @@ LOGGING_CFG = {
     'disable_existing_loggers': True,
     'formatters': {
         'verbose': {
-            'format': '%(asctime)s %(levelname)s %(module)s : %(message)s'
+            'format': '%(asctime)s %(levelname)s %(module)s: %(message)s'
         }
     },
     'handlers': {
