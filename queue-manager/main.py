@@ -2,10 +2,10 @@ import sys
 import logging.config
 import logging
 from conf.appconfig import APP_NAME
-from conf.logconfig import LOGGING_CFG
+from conf.logconfig import APP_LOGGING_CFG
 from apps import persistence, subscriber, publisher
 
-logging.config.dictConfig(LOGGING_CFG)
+logging.config.dictConfig(APP_LOGGING_CFG)
 logger = logging.getLogger(APP_NAME)
 
 USAGE = '''

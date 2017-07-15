@@ -1,36 +1,13 @@
 import json
 import logging
 import os
-
 import sqlite3
-import time
 
-from conf.appconfig import APP_NAME
+from conf.appconfig import APP_NAME, ENQ_REQ_KEYS
 from conf.dbconfig import QUERY_DROP_TABLE, QUERY_CREATE_TABLE, QUERY_NEXT_ELIGIBLE_TASK, QUERY_CREATE_TASK, \
-    QUERY_CLEAR_TABLE, QUERY_SET_TASK_IN_PROGRESS, QUERY_VALIDATE_TASK, QUERY_SET_TASK_COMPLETE
-
-TASK_INCOMPLETE = 0
-TASK_IN_PROGRESS = 1
-TASK_COMPLETE = 2
-
-SET_TASK_REQUIRED_KEYS = set(['name', 'schedule', 'config'])
-
-
-class TaskStoreError(Exception):
-    def __init__(self, *args, **kwargs):
-        Exception.__init__(self, *args, **kwargs)
-
-
-def epoch():
-    return int(time.time())
-
-
-def obj2jsonstring(object):
-    return json.dumps(object)
-
-
-def generate_uuid(name, schedule, db_id):
-    return '%s|%d|%d' % (name, schedule, db_id)
+    QUERY_CLEAR_TABLE, QUERY_SET_TASK_IN_PROGRESS, QUERY_VALIDATE_TASK, QUERY_SET_TASK_COMPLETE, \
+    QUERY_SET_TASK_INCOMPLETE
+from utils.common import generate_uuid, epoch, TaskQueueInputError, TaskQueueEmptyError
 
 
 class TaskStore:
@@ -62,7 +39,7 @@ class TaskStore:
         self.logger.info('Fetch next eligible task for capabilities: %s', capabilities)
         task = self.cursor.fetchone()
         if not task:
-            self.raise_error('No task found matching capabilities: %s' % capabilities)
+            self.raise_no_task_error('No task found matching capabilities: %s' % capabilities)
         name, config, uuid, schedule = task[1], json.loads(task[4]), generate_uuid(task[1], task[5], task[0]), task[5]
         return {
             'name': name,
@@ -88,10 +65,16 @@ class TaskStore:
     def mark_complete(self, uuid, result, processor):
         queue_id = self.validate_uuid(uuid)
         if type(result) is not dict or type(processor) is not dict:
-            self.raise_error('result and processor should be dict')
+            self.raise_input_error('result and processor should be dict')
         self.cursor.execute(QUERY_SET_TASK_COMPLETE, (epoch(), json.dumps(result), json.dumps(processor), queue_id))
         self.connection.commit()
-        self.logger.info('Task uuid: %s marked in progress', uuid)
+        self.logger.info('Task uuid: %s marked complete', uuid)
+
+    def mark_failed(self, uuid):
+        queue_id = self.validate_uuid(uuid)
+        self.cursor.execute(QUERY_SET_TASK_INCOMPLETE, (queue_id,))
+        self.connection.commit()
+        self.logger.info('Task uuid: %s marked failed', uuid)
 
     def cleanup(self):
         self.cursor.execute(QUERY_CLEAR_TABLE)
@@ -100,30 +83,34 @@ class TaskStore:
 
     def validate_capabilities(self, capabilities):
         if type(capabilities) is not list:
-            self.raise_error('Capabilities should be a list')
+            self.raise_input_error('Capabilities should be a list')
         if len(capabilities) == 0:
-            self.raise_error('Capabilities should not be empty')
+            self.raise_input_error('Capabilities should not be empty')
         if False in map(lambda x: type(x) is str, capabilities):
-            self.raise_error('Capabilities should be a list of string')
+            self.raise_input_error('Capabilities should be a list of string')
         return ','.join(['"%s"' % x for x in capabilities])
 
     def validate_uuid(self, uuid):
         if uuid.count('|') != 2:
-            self.raise_error('UUID should be of format task|schedule|index, supplied: %s' % uuid)
+            self.raise_input_error('UUID should be of format task|schedule|index, supplied: %s' % uuid)
         name, schedule, queue_id = uuid.split('|')
         schedule, queue_id = int(schedule), int(queue_id)
         self.cursor.execute(QUERY_VALIDATE_TASK, (queue_id, name, schedule))
         if self.cursor.fetchone() is None:
-            self.raise_error('Task uuid: %s does not exist' % uuid)
+            self.raise_input_error('Task uuid: %s does not exist' % uuid)
         return queue_id
 
     def validate_task(self, task):
         if type(task) is not dict:
-            self.raise_error('Task should be a dict')
-        if not SET_TASK_REQUIRED_KEYS.issubset(set(task.keys())):
-            self.raise_error('Task should contain name, schedule and config')
-        return task['name'], obj2jsonstring(task['config']), task['schedule']
+            self.raise_input_error('Task should be a dict')
+        if not ENQ_REQ_KEYS.issubset(set(task.keys())):
+            self.raise_input_error('Task should contain name, schedule and config')
+        return task['name'], json.dumps(task['config']), task['schedule']
 
-    def raise_error(self, message):
-        self.logger.error(message)
-        raise TaskStoreError(message)
+    def raise_input_error(self, message):
+        self.logger.error('User Error: %s', message)
+        raise TaskQueueInputError(message)
+
+    def raise_no_task_error(self, message):
+        self.logger.warning(message)
+        raise TaskQueueEmptyError(message)

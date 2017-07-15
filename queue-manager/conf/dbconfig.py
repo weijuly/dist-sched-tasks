@@ -81,7 +81,7 @@ update
 set
     state = 0
 where
-    queue_id = %d
+    queue_id = ?
 '''
 
 QUERY_VALIDATE_TASK = '''
