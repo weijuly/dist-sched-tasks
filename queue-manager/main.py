@@ -3,7 +3,7 @@ import logging.config
 import logging
 from conf.appconfig import APP_NAME
 from conf.logconfig import APP_LOGGING_CFG
-from apps import persistence, subscriber, publisher
+from apps import persistence, subscriber, publisher, webapp
 
 logging.config.dictConfig(APP_LOGGING_CFG)
 logger = logging.getLogger(APP_NAME)
@@ -28,8 +28,11 @@ Module: persistence
 
 MODULES = {
     'persistence': persistence.main,
-    'delegate': publisher.main
+    'delegate': publisher.main,
+    'queue-manager': webapp.main
 }
+
+app = webapp.app
 
 
 def main(args):

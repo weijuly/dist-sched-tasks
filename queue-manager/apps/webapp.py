@@ -95,9 +95,7 @@ def about():
 def enqueue():
     try:
         task = validate_enq_req(request.get_json())
-        uuid = taskStore.put(task)
-        appLogger.info('Created task: %s', uuid)
-        task['uuid'] = uuid
+        task['uuid'] = taskStore.put(task)
         return success(task, status=201)
     except TaskQueueInputError as e:
         return bad_request(str(e))
@@ -139,3 +137,7 @@ def update():
 def after(response):
     webLogger.info('%s %s %s %s' % (request.remote_addr, request.method, request.full_path, response.status))
     return response
+
+
+def main(args):
+    app.run(host='0.0.0.0')
