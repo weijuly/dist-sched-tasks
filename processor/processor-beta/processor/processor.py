@@ -19,7 +19,8 @@ PROCESSOR = {
 CAPABILITIES = [
     'calculate-prime-number',
     'calculate-triangular-number',
-    'nyquist-plot'
+    'nyquist-plot',
+    'cook-pasta'
 ]
 
 HEADERS = {
@@ -31,6 +32,7 @@ def check_for_task():
     data = json.dumps({'processor': PROCESSOR, 'capabilities': CAPABILITIES}).encode('utf-8')
     req = urllib.request.Request(TASK_REQUEST_URL, data=data, headers=HEADERS)
     res = urllib.request.urlopen(req)
+    return res
 
 
 def main():
@@ -40,6 +42,7 @@ def main():
     while True:
         try:
             task = check_for_task()
+            print(task)
             print('processing task')
             print('updating status')
             print('sleeping for %d' % snooze)
