@@ -1,1 +1,1 @@
-docker run -d -t gganesan/processor-01-stage:latest
+docker run -d dts-processor-dk

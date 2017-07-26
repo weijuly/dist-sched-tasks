@@ -1,1 +1,1 @@
-docker build -t gganesan/sched-01-stage .
+docker build -t dts-scheduler-dk .

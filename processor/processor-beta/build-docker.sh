@@ -1,1 +1,1 @@
-docker build -t gganesan/processor-01-stage .
+docker build -t dts-processor-dk .

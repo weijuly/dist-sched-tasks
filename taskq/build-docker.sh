@@ -1,1 +1,1 @@
-docker build -t gganesan/taskq-01-stage .
+docker build -t taskq-dk .
