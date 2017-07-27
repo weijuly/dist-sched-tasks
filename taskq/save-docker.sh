@@ -1,1 +1,1 @@
-docker save taskq-dk.image taskq-dk
+docker save -o dts-taskq-dk.image dts-taskq-dk

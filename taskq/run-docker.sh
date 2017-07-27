@@ -1,1 +1,1 @@
-docker run -p 8000:80 -d taskq-dk
+docker run -p 8000:80 -d dts-taskq-dk

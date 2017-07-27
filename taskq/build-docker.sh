@@ -1,1 +1,1 @@
-docker build -t taskq-dk .
+docker build -t dts-taskq-dk .

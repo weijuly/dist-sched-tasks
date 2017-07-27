@@ -1,1 +1,1 @@
-docker save dts-scheduler-dk.image dts-scheduler-dk
+docker save -o dts-scheduler-dk.image dts-scheduler-dk
